@@ -1,5 +1,5 @@
 # training/data/build_ner_dataset.py
-from utils_data import fetch_data_from_mongo, convert_to_bio, split_train_valid, save_ner_tuples_to_jsonl
+from training.features.build_data.utils_data import fetch_data_from_mongo, convert_to_bio, split_train_valid, save_ner_tuples_to_jsonl
 import os
 from dotenv import load_dotenv
 load_dotenv()

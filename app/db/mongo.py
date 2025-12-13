@@ -1,18 +1,25 @@
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import ConnectionFailure
 from app.core.config import settings
 
+_client: AsyncIOMotorClient | None = None
 
-def get_mongo_client() -> MongoClient:
+
+async def get_mongo_client() -> AsyncIOMotorClient:
+    global _client
+    if _client:
+        return _client
+
     try:
-        client = MongoClient(settings.mongo_uri)
-        client.admin.command("ping")
-        print("MongoDB connected")
+        client = AsyncIOMotorClient(settings.mongo_uri)
+        await client.admin.command("ping")
+        print("MongoDB async connected")
+        _client = client
         return client
     except ConnectionFailure as e:
         raise RuntimeError(f"MongoDB connection failed: {e}")
 
 
-def get_database():
-    client = get_mongo_client()
+async def get_database() -> AsyncIOMotorDatabase:
+    client = await get_mongo_client()
     return client[settings.mongo_db]

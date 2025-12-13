@@ -17,7 +17,7 @@ ENV/
 .venv
 
 # Environment variables
-
+model_export/
 
 # IDE
 .vscode/

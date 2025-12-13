@@ -1,118 +1,55 @@
 from typing import List, Dict
 import logging
 from pymongo import InsertOne
-from pymongo.errors import PyMongoError
+from pymongo.errors import PyMongoError, BulkWriteError
 
-
-def process_and_store_labeled_data(collection, docs: List[Dict]):
+def process_and_store_data(collection, docs: List[Dict]):
     try:
         if not docs:
             return {"inserted": 0}
-
-        operations = []
-        for d in docs:
-            if "id" not in d:
-                continue  
-            operations.append(
-                InsertOne(d)
-            )
-
+    
+        operations = [InsertOne(doc) for doc in docs if "id" in doc]
+        
         if not operations:
+            logging.warning("No valid documents to insert")
             return {"inserted": 0}
-
-        result = collection.bulk_write(
-            operations,
-            ordered=False 
-        )
-
-        return {
-            "inserted": result.inserted_count
-        }
-
+        
+        result = collection.bulk_write(operations, ordered=False)
+        return {"inserted": result.inserted_count}
+        
+    except BulkWriteError as e:
+        inserted = e.details.get('nInserted', 0)
+        logging.warning(f"Bulk insert partially failed. Inserted: {inserted}")
+        return {"inserted": inserted}
+        
     except PyMongoError as e:
-        logging.error(f"Mongo insert error: {e}")
-        raise RuntimeError("MongoDB insert failed")
+        logging.error(f"MongoDB error: {e}")
+        raise RuntimeError("MongoDB operation failed")
 
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")
-
-
-def delete_all_labeled_data(collection):
+def delete_by_ids(collection,  ids: List[str]):
     try:
-        result = collection.delete_many({})
+        if not ids:
+            return {"deleted": 0, "not_found": []}
+        existing_docs = list(collection.find(
+            {"id": {"$in": ids}},
+            {"id": 1}
+        ))
+        
+        existing_ids = [doc["id"] for doc in existing_docs]
+        
+        not_found_ids = [id for id in ids if id not in existing_ids]
+        
+        if existing_ids:
+            result = collection.delete_many({"id": {"$in": existing_ids}})
+            deleted_count = result.deleted_count
+        else:
+            deleted_count = 0
+        
         return {
-            "deleted": result.deleted_count
+            "deleted": deleted_count,
+            "not_found": not_found_ids
         }
-
+        
     except PyMongoError as e:
-        logging.error(f"Mongo delete error: {e}")
+        logging.error(f"MongoDB delete error: {e}")
         raise RuntimeError("MongoDB delete failed")
-
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")
-
-
-def get_all_labeled_data(collection):
-    try:
-        docs = collection.find({}).to_list(length=None)
-        return docs
-
-    except PyMongoError as e:
-        logging.error(f"Mongo fetch error: {e}")
-        raise RuntimeError("MongoDB fetch failed")
-
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")
-
-
-
-def process_and_store_labeled_data(collection, docs: List[Dict]):
-    try:
-        if not docs:
-            return {"inserted": 0}
-
-        result = collection.insert_many(docs)
-        return {
-            "inserted": len(result.inserted_ids)
-        }
-
-    except PyMongoError as e:
-        logging.error(f"Mongo insert error: {e}")
-        raise RuntimeError("MongoDB insert failed")
-
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")
-
-
-def delete_all_labeled_data(collection):
-    try:
-        result = collection.delete_many({})
-        return {
-            "deleted": result.deleted_count
-        }
-
-    except PyMongoError as e:
-        logging.error(f"Mongo delete error: {e}")
-        raise RuntimeError("MongoDB delete failed")
-
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")
-
-
-def get_all_labeled_data(collection):
-    try:
-        docs = collection.find({}).to_list(length=None)
-        return docs
-
-    except PyMongoError as e:
-        logging.error(f"Mongo fetch error: {e}")
-        raise RuntimeError("MongoDB fetch failed")
-
-    except Exception as e:
-        logging.error(f"Service error: {e}")
-        raise RuntimeError("Internal processing error")

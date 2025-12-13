@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from app.api.labeled import ner_labeled, re_labeled
-from app.api.routes_re import router as re_routes
+from app.api.ner import ner_routes
+from app.api.re import re_routes
+from app.api.ner import ner_routes
 
 app = FastAPI()
 
-app.include_router(ner_labeled.router, prefix="/api/labeled_data")
-app.include_router(re_labeled.router, prefix="/api/labeled_data")
-app.include_router(re_routes)
+
+app.include_router(re_routes.router)
+app.include_router(ner_routes.router)
 

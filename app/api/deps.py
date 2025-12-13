@@ -1,5 +1,4 @@
 from app.db.mongo import get_database
 
-def get_db():
-    db = get_database()
-    return db
+async def get_db():
+    return await get_database()

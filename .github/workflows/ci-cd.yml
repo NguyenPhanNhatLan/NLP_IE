@@ -1,0 +1,58 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}:latest
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: [pve-01]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+          docker login ${{ secrets.REGISTRY_URL }} \
+            -u ${{ secrets.REGISTRY_USERNAME }} \
+            --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t $DOCKER_IMAGE .
+
+      - name: Push Docker image
+        run: |
+          docker push $DOCKER_IMAGE
+
+  deploy:
+    name: Pull & Deploy
+    needs: build-and-push
+    runs-on: [pve-01]
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+
+      - name: Deploy via SSH
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            docker login ${{ secrets.REGISTRY_URL }} \
+              -u ${{ secrets.REGISTRY_USERNAME }} \
+              -p ${{ secrets.GITHUB_TOKEN }} &&
+            cd ${{ secrets.GROUP_NAME }}/${{ secrets.CONTAINER_NAME }} &&
+            docker compose pull &&
+            docker compose down &&
+            docker compose up -d --remove-orphans
+          "
