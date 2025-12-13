@@ -1,0 +1,11 @@
+.git
+.github
+__pycache__/
+*.pyc
+.env
+data/
+model_export/
+notebooks/
+.venv/
+.vscode/
+.DS_Store
