@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  DOCKER_IMAGE: ghcr.io/${{ github.repository_owner }}/nlp_ie:latest
+  IMAGE_NAME: nlp_ie
+  REGISTRY: ghcr.io
 
 jobs:
   build-and-push:
@@ -16,6 +17,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Set lowercase image name
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "DOCKER_IMAGE=${REGISTRY}/${OWNER}/${IMAGE_NAME}:latest" >> $GITHUB_ENV
 
       - name: Login to Container Registry
         run: |
