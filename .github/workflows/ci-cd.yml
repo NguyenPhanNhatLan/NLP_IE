@@ -11,7 +11,7 @@ env:
 jobs:
   build-and-push:
     name: Build & Push Docker Image
-    runs-on: [pve-01]
+    runs-on: [pve01]
 
     steps:
       - name: Checkout code
@@ -35,7 +35,7 @@ jobs:
   deploy:
     name: Pull & Deploy
     needs: build-and-push
-    runs-on: [pve-01]
+    runs-on: [pve01]
 
     steps:
       - name: Setup SSH
