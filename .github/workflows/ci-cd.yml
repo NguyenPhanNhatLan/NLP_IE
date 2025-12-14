@@ -57,7 +57,7 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh -vvv -i ~/.ssh/id_ed25519 -o ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             docker login ${{ secrets.REGISTRY_URL }} \
               -u ${{ secrets.REGISTRY_USERNAME }} \
               -p ${{ secrets.GITHUB_TOKEN }} &&
