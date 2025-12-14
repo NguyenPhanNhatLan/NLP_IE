@@ -1,31 +1,25 @@
-# Git & CI
-.git
-.github
-
-# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+pycache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Env & IDE
-.env
 .venv/
-.vscode/
+venv/
+env/
+
+.git/
+.gitignore
 .DS_Store
 
-# Data / ML
 data/
-model_export/
+outputs/
 models/
-notebooks/
-.cache/
-.huggingface/
+mlruns/
+wandb/
 
-# ML artifacts
-*.pt
-*.pth
-*.bin
-*.ckpt
-*.safetensors
 *.log
+*.sqlite
