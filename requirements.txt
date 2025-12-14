@@ -144,7 +144,7 @@ preshed==3.0.12
 promise==2.3
 propcache==0.4.1
 Protego==0.5.0
-protobuf==6.33.2
+protobuf==4.25.3
 psycopg2-binary==2.9.9
 py_vncorenlp==0.1.4
 pyarrow==22.0.0
