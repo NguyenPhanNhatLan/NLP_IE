@@ -12,20 +12,25 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
+    g++ \
     git \
     curl \
     libgomp1 \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 1) Copy requirements trước để tận dụng cache
+# Copy requirements trước để tận dụng cache
 COPY requirements.txt .
 
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+# Upgrade pip và cài đặt packages với verbose output
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt -v
 
-# 2) Copy toàn bộ source code
+# Copy toàn bộ source code
 COPY . .
 
-# Mặc định chạy training
-# (tương đương: python training/run_experiments.py)
+# Expose port cho API
+EXPOSE 8000
+
+# Mặc định chạy uvicorn
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

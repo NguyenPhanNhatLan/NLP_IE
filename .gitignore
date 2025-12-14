@@ -19,6 +19,7 @@ ENV/
 # Environment variables
 model_export/
 
+.gitignore
 # IDE
 .vscode/
 .idea/
