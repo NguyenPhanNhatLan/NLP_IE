@@ -48,21 +48,22 @@ jobs:
     runs-on: [self-hosted, Linux]
 
     steps:
-      - name: Setup SSH (base64)
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_BASE_64 }}" | tr -d '\n\r ' | base64 -d > ~/.ssh/id_ed25519
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          sed -i 's/\r$//' ~/.ssh/id_ed25519
+          echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
 
-
-      - name: Validate SSH key
+      - name: Deploy via SSH
         run: |
-          set -e
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
-          echo "SSH key OK"
-
-      - name: SSH test
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "whoami && hostname"
+          ssh -vvv -i ~/.ssh/id_ed25519 -${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "whoami && hostname"
+            docker login ${{ secrets.REGISTRY_URL }} \
+              -u ${{ secrets.REGISTRY_USERNAME }} \
+              -p ${{ secrets.GITHUB_TOKEN }} &&
+            cd ${{ secrets.GROUP_NAME }}/${{ secrets.CONTAINER_NAME }} &&
+            docker compose pull &&
+            docker compose down &&
+            docker compose up -d --remove-orphans
+          "
