@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System deps (hay cần cho numpy/pandas/sklearn, build wheels)
+# System dependencies cần thiết cho build wheels và các thư viện ML
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -17,20 +17,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libgomp1 \
     python3-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements trước để tận dụng cache
+# Copy và clean requirements.txt
 COPY requirements.txt .
 
-# Upgrade pip và cài đặt packages với verbose output
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt -v
+# Clean requirements.txt - loại bỏ local paths và chỉ giữ package names
+RUN sed -i 's/ @ file:\/\/.*//g' requirements.txt && \
+    sed -i '/^#/d' requirements.txt && \
+    sed -i '/^$/d' requirements.txt
 
-# Copy toàn bộ source code
+# Upgrade pip và install dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt || \
+    (echo "Failed packages - trying without strict versions..." && \
+    sed -i 's/==.*//' requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt)
+
+# Copy source code
 COPY . .
 
-# Expose port cho API
+# Expose port
 EXPOSE 8000
 
-# Mặc định chạy uvicorn
+# Run uvicorn
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
