@@ -1,53 +1,63 @@
-
-FROM python:3.10-slim AS builder
+# syntax=docker/dockerfile:1.4
+FROM python:3.10.19-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PATH="/root/.cargo/bin:${PATH}"
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-# Build deps cho Python packages (scipy/sklearn/tokenizers/underthesea/psycopg2...)
+# Cài đặt build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc g++ \
-    curl pkg-config \
-    libssl-dev libffi-dev \
-    libpq-dev \
+    build-essential \
+    gcc \
+    g++ \
+    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy và build dependencies
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip setuptools wheel && \
+    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
-COPY requirements.txt /app/requirements.txt
-
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
-    python -m pip install -U pip setuptools wheel maturin && \
-    mkdir -p /wheels && \
-    python -m pip wheel --wheel-dir /wheels -r /app/requirements.txt
-
-
-FROM python:3.10-slim AS runtime
+# ============================================
+# Runtime stage
+# ============================================
+FROM python:3.10.19-slim-bookworm AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONPATH=/app
+    HF_HOME=/opt/hf \
+    TRANSFORMERS_CACHE=/opt/hf/transformers \
+    PATH="/home/app/.local/bin:$PATH"
 
 WORKDIR /app
 
+# Cài đặt runtime dependencies và tạo user
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     libgomp1 \
-    libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && addgroup --system --gid 1001 app \
+    && adduser --system --uid 1001 --ingroup app app \
+    && mkdir -p /opt/hf /app \
+    && chown -R app:app /opt/hf /app
 
+# Install Python packages
 COPY --from=builder /wheels /wheels
-COPY requirements.txt /app/requirements.txt
-RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels -r /app/requirements.txt && \
+RUN pip install --no-index --find-links=/wheels /wheels/* && \
     rm -rf /wheels
 
+# Copy application code
 COPY . .
 
+# Expose port
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
