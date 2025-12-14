@@ -53,8 +53,24 @@ jobs:
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          sed -i 's/\r$//' ~/.ssh/id_ed25519
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
+          head -n 1 ~/.ssh/id_ed25519
+          tail -n 1 ~/.ssh/id_ed25519
+          
+          cat > ~/.ssh/config << 'EOF'
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null
+            IdentitiesOnly yes
+          EOF
+          chmod 600 ~/.ssh/config
+          
+      - name: Test SSH Connection
+        run: |
+          ssh -vvv -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o PasswordAuthentication=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "whoami && hostname"
 
       - name: Deploy via SSH
         run: |
