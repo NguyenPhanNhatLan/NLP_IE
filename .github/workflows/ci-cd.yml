@@ -51,13 +51,14 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          sed -i 's/\r$//' ~/.ssh/id_ed25519
           echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
 
       - name: Deploy via SSH
         run: |
-          ssh -vvv -i ~/.ssh/id_ed25519 -o ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh -vvv -i ~/.ssh/id_ed25519 -o ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "whoami && hostname"
             docker login ${{ secrets.REGISTRY_URL }} \
               -u ${{ secrets.REGISTRY_USERNAME }} \
               -p ${{ secrets.GITHUB_TOKEN }} &&
