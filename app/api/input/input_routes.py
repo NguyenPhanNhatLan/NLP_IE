@@ -8,4 +8,3 @@ from fastapi.responses import JSONResponse
 router = APIRouter(
     tags=["Data Receiver"]
 )
-
