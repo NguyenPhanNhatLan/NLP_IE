@@ -1,11 +1,31 @@
+# Git & CI
 .git
 .github
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Env & IDE
 .env
-data/
-model_export/
-notebooks/
 .venv/
 .vscode/
 .DS_Store
+
+# Data / ML
+data/
+model_export/
+models/
+notebooks/
+.cache/
+.huggingface/
+
+# ML artifacts
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.safetensors
+*.log
