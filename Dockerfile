@@ -1,4 +1,4 @@
-# Dockerfile
+# Dockerfile - Không cần requirements.txt
 FROM python:3.10-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -22,12 +22,63 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copy ONLY requirements-docker.txt
-COPY requirements-docker.txt requirements.txt
+# Install Python packages theo nhóm để dễ quản lý và cache
+# Core Web Framework
+RUN pip install --no-cache-dir \
+    fastapi==0.115.0 \
+    uvicorn[standard]==0.30.0 \
+    pydantic==2.9.0 \
+    python-multipart==0.0.20 \
+    python-dotenv==1.2.1
 
-# Install packages
-RUN pip install --no-cache-dir -r requirements.txt
+# Database
+RUN pip install --no-cache-dir \
+    sqlalchemy==2.0.44 \
+    alembic==1.17.2 \
+    psycopg2-binary==2.9.11 \
+    pymongo==4.15.4
 
+# Data Science Core (numpy phải cài trước)
+RUN pip install --no-cache-dir \
+    numpy==1.26.4
+
+RUN pip install --no-cache-dir \
+    pandas==2.3.3 \
+    scikit-learn==1.5.0 \
+    scipy==1.13.0
+
+# Deep Learning - Chọn 1 trong 2 (uncomment cái bạn cần)
+# PyTorch
+# RUN pip install --no-cache-dir \
+#     torch==2.2.0 \
+#     torchvision==0.17.0
+
+# TensorFlow
+# RUN pip install --no-cache-dir \
+#     tensorflow==2.16.2
+
+# NLP & Transformers
+RUN pip install --no-cache-dir \
+    transformers==4.40.0 \
+    tokenizers==0.19.0 \
+    sentence-transformers==2.7.0 \
+    huggingface-hub==0.23.0
+
+# Vietnamese NLP
+RUN pip install --no-cache-dir \
+    underthesea==6.8.0 \
+    py-vncorenlp==0.1.4
+
+# Utilities
+RUN pip install --no-cache-dir \
+    requests==2.32.3 \
+    aiohttp==3.9.5 \
+    tqdm==4.66.0 \
+    pyyaml==6.0.1 \
+    pillow==10.3.0 \
+    joblib==1.4.0
+
+# Copy source code
 COPY . .
 
 EXPOSE 8000
