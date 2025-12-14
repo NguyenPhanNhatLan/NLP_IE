@@ -51,7 +51,7 @@ jobs:
       - name: Setup SSH (base64)
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | tr -d '\n\r ' | base64 -d > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY_BASE_64 }}" | tr -d '\n\r ' | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
 
