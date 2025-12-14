@@ -53,8 +53,8 @@ jobs:
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          head -n 1 ~/.ssh/id_ed25519
-          tail -n 1 ~/.ssh/id_ed25519
+
+          echo "${{ secrets.SSH_PRIVATE_KEY }}"
           
           cat > ~/.ssh/config << 'EOF'
           Host *
@@ -63,7 +63,7 @@ jobs:
             IdentitiesOnly yes
           EOF
           chmod 600 ~/.ssh/config
-          
+
       - name: Test SSH Connection
         run: |
           ssh -vvv -i ~/.ssh/id_ed25519 \
