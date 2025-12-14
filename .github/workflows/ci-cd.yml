@@ -54,6 +54,10 @@ jobs:
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          eval $(ssh-agent)
+          ssh-add ~/.ssh/id_ed25519
+          ssh-add -l
+
           
           cat > ~/.ssh/config << 'EOF'
           Host *
@@ -70,7 +74,6 @@ jobs:
           echo "SSH Host: ${{ secrets.SSH_HOST }}"
           echo "SSH Port: ${{ secrets.SSH_PORT || '22' }}"
           
-          # Hoặc nếu dùng format user@host
           echo "Full connection: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
 
       - name: Deploy via SSH
